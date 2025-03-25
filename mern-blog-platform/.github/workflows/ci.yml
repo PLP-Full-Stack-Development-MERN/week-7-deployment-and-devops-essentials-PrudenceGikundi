@@ -1,0 +1,60 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # Install dependencies for backend
+      - name: Install backend dependencies
+        working-directory: server
+        run: npm install
+
+      # Run backend tests
+      - name: Run backend tests
+        working-directory: server
+        run: npm test
+
+      # Install dependencies for frontend
+      - name: Install frontend dependencies
+        working-directory: client
+        run: npm install
+
+      # Run frontend tests
+      - name: Run frontend tests
+        working-directory: client
+        run: npm test
+
+      # Build frontend
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
